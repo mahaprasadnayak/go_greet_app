@@ -1,26 +1,29 @@
 package main
- 
+
 import (
+	"context"
 	"fmt"
-	"net/http"
+
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 )
 
-func greetHandler(w http.ResponseWriter, r *http.Request) {
-	name := r.URL.Query().Get("name")
+func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	name := request.QueryStringParameters["name"]
 	if name == "" {
-		http.Error(w, "Please provide a name parameter", http.StatusBadRequest)
-		return
+		return events.APIGatewayProxyResponse{
+			StatusCode: 400,
+			Body:       "Please provide a name parameter",
+		}, nil
 	}
 
-	fmt.Fprintf(w, "Hiiii %s ::: Nice to Meet You !!", name)
+	message := fmt.Sprintf("hii %s", name)
+	return events.APIGatewayProxyResponse{
+		StatusCode: 200,
+		Body:       message,
+	}, nil
 }
 
 func main() {
-	http.HandleFunc("/greet", greetHandler)
-
-	fmt.Println("Server starting ..........")
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		fmt.Println("Error starting server:", err)
-	}
+	lambda.Start(handler)
 }
